@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Shell script to test the CentOS Docker image.
+#
+# Copyright 2016-2021, Frederico Martins
+#   Author: Frederico Martins <http://github.com/fscm>
+#
+# SPDX-License-Identifier: MIT
+#
+# This program is free software. You can use it and/or modify it under the
+# terms of the MIT License.
+#
+
+# Variables
+_PM_='dnf'
+
+echo "=== Docker Build Test ==="
+
+printf '[TEST] Check if %s command is installed... ' "${_PM_}"
+if rpm -q "${_PM_}" > /dev/null 2>&1; then
+  echo 'OK'
+else
+  echo 'Failed'
+  exit 1
+fi
+
+printf '[TEST] Check package installation with %s... ' "${_PM_}"
+if ("${_PM_}" -y -q install less && less --version) > /dev/null 2>&1; then
+  echo 'OK'
+else
+  echo 'Failed'
+  exit 2
+fi
+
+printf '[TEST] Check if packages are correctly installed... '
+if ("${_PM_}" -q --assumeno install $(rpm -qa --qf "%{name} " | sed 's/gpg-pubkey[^ ]*//g') > /dev/null 2>&1); then
+  echo 'OK'
+else
+  echo 'Failed'
+  exit 3
+fi
+
+exit 0
