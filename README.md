@@ -8,7 +8,9 @@ installed on a regular Rocky Linux image.
 
 ## Supported tags
 
-* `8`, `latest`
+- [`8`][latest], [`latest`][latest]
+
+[latest]: https://github.com/fscm/docker-rockylinux/blob/master/rockylinux8/Dockerfile
 
 ## What is Rocky Linux ?
 

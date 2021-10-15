@@ -32,11 +32,11 @@ In order to create a Docker image using this Dockerfiles you need to run the
 docker image build --force-rm --no-cache --quiet --file <VARIANT>/Dockerfile --tag <USER>/<IMAGE>:<TAG> <PATH>
 ```
 
-* `<USER>` - *[required]* The user that will own the container image (e.g.: "johndoe").
-* `<IMAGE>` - *[required]* The container name (e.g.: "rockylinux").
-* `<TAG>` - *[required]* The container tag (e.g.: "latest").
-* `<PATH>` - *[required]* The location of the Dockerfile folder.
-* `<VARIANT>` - *[required]* The variant that is being build (`rockylinux8`).
+- `<USER>` - *[required]* The user that will own the container image (e.g.: "johndoe").
+- `<IMAGE>` - *[required]* The container name (e.g.: "rockylinux").
+- `<TAG>` - *[required]* The container tag (e.g.: "latest").
+- `<PATH>` - *[required]* The location of the Dockerfile folder.
+- `<VARIANT>` - *[required]* The variant that is being build (`rockylinux8`).
 
 A build example:
 
@@ -106,7 +106,7 @@ available, see the [tags on this repository](https://github.com/fscm/docker-rock
 
 ## Authors
 
-* **Frederico Martins** - [fscm](https://github.com/fscm)
+- **Frederico Martins** - [fscm](https://github.com/fscm)
 
 See also the list of [contributors](https://github.com/fscm/docker-rockylinux/contributors)
 who participated in this project.
