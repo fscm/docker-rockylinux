@@ -1,70 +1,57 @@
 # global args
 ARG __BUILD_DIR__="/build"
+ARG OS_VERSION="8.5.2111"
 
 
 
 FROM rockylinux/rockylinux:8 as first_stage
 
 ARG __BUILD_DIR__
+ARG OS_VERSION
 ARG OS_CODENAME="rocky"
-ARG OS_VERSION="8.4.2106"
 ARG __USER__="root"
 ARG __WORK_DIR__="/root"
 
 ENV \
-  LANG="C.UTF-8" \
-  LC_ALL="C.UTF-8"
+    LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8"
 
 USER ${__USER__}
 
-COPY "files/" "${__WORK_DIR__}/"
+COPY "files/" "${__WORK_DIR__}"/
 
 WORKDIR "${__WORK_DIR__}"
 
 RUN \
-# build env
-  echo '=== setting build env ===' && \
-  time { \
-    set +h && \
-    export TIMEFORMAT='=== time taken: %lR (s:%lS u:%lU)' ; \
-  } && \
 # import rpm key
-  echo '=== import rpm keys ===' && \
-  time { \
-    rpm --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-${OS_CODENAME}official" ; \
-  } && \
+    echo '--> import rpm keys' && \
+    rpm --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-${OS_CODENAME}official" && \
 # dependencies
-  echo '=== instaling dependencies ===' && \
-  time { \
+    echo '--> instaling dependencies' && \
     dnf --assumeyes --quiet install \
-      device-mapper-persistent-data \
-      lvm2 \
-      dnf-plugins-core ; \
-  } && \
+        device-mapper-persistent-data \
+        findutils \
+        lvm2 \
+        dnf-plugins-core && \
 # build structure
-  echo '=== creating build structure ===' && \
-  time { \
-    install --directory --owner="${__USER__}" --group="${__USER__}" --mode=0755 "${__BUILD_DIR__}" ; \
-  } && \
+    echo '--> creating build structure' && \
+    install --directory --owner="${__USER__}" --group="${__USER__}" --mode=0755 "${__BUILD_DIR__}" && \
 # build first stage
-  echo '=== building first stage ===' && \
-  time { \
+    echo '--> building first stage' && \
     dnf download --assumeyes --quiet --arch="$(arch),noarch" --destdir="${__WORK_DIR__}" ${OS_CODENAME}-release-${OS_VERSION%.*}-* && \
     rpm --root "${__BUILD_DIR__}" --initdb && \
     rpm --root "${__BUILD_DIR__}" --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-${OS_CODENAME}official" && \
     rpm --root "${__BUILD_DIR__}" --install --nodeps --noscripts "${__WORK_DIR__}"/"${OS_CODENAME}"-release*.rpm && \
     dnf --assumeyes --quiet --disablerepo='*' --enablerepo='baseos' --installroot="${__BUILD_DIR__}" --setopt=tsflags='nodocs' --setopt=install_weak_deps='no' install \
-      bash \
-      "${OS_CODENAME}"-repos \
-      coreutils-single \
-      dnf \
-      glibc-minimal-langpack \
-      hostname \
-      tar ; \
-  } && \
+        bash \
+        "${OS_CODENAME}"-repos \
+        coreutils-single \
+        dnf \
+        glibc-minimal-langpack \
+        hostname \
+        tar && \
 # clean up and tweaks...
-  echo '=== system settings and tweaks ===' && \
-  time { \
+    echo '--> system settings and tweaks' && \
     sed -i -e '/best=True/a exclude=*.i?86\ntsflags=nodocs' "${__BUILD_DIR__}/etc/dnf/dnf.conf" && \
     echo 'container' > "${__BUILD_DIR__}/etc/dnf/vars/infra" && \
     echo '%_install_langs C.UTF8' > "${__BUILD_DIR__}/etc/rpm/macros.image-language-conf" && \
@@ -97,38 +84,42 @@ RUN \
     find "${__BUILD_DIR__}/usr/share/doc" -mindepth 1 -not -type d -not \( -name 'COPYING*' -o -name 'GPL' -o -name '*LICENSE*' \) -delete && \
     find "${__BUILD_DIR__}/usr/share/doc" -mindepth 1 -type d -empty -delete && \
     find "${__BUILD_DIR__}/var/cache" -type f -delete && \
-    find "${__BUILD_DIR__}/etc/yum.repos.d" \( -iname '*debuginfo*' -o -iname '*media*' \) -type f -delete ; \
-  } && \
+    find "${__BUILD_DIR__}/etc/yum.repos.d" \( -iname '*debuginfo*' -o -iname '*media*' \) -type f -delete && \
 # copy tests
-  echo '=== copying test files ===' && \
-  time { \
-    install --owner="${__USER__}" --group="${__USER__}" --mode=0755 --target-directory="${__BUILD_DIR__}/usr/bin" "${__WORK_DIR__}/tests"/* ; \
-  } && \
+    echo '--> copying test files' && \
+    install --owner="${__USER__}" --group="${__USER__}" --mode=0755 --target-directory="${__BUILD_DIR__}/usr/bin" "${__WORK_DIR__}/tests"/* && \
 # check version
-  echo '=== os version ===' && \
-  time { \
+    echo '--> os version' && \
     cat "${__BUILD_DIR__}/etc/${OS_CODENAME}-release"* && \
-    rpm --root "${__BUILD_DIR__}" --query --queryformat='%{VERSION}\n' "${OS_CODENAME}"-release ; \
-  } && \
+    rpm --root "${__BUILD_DIR__}" --query --queryformat='%{VERSION}\n' "${OS_CODENAME}"-release && \
 # done
-  echo '=== all done! ==='
+    echo '--> all done!'
 
 
 
 FROM scratch
 
 ARG __BUILD_DIR__
+ARG OS_VERSION
 
 LABEL \
-  maintainer="Frederico Martins <https://hub.docker.com/u/fscm/>" \
-  vendor="fscm" \
-  cmd="docker container run --interactive --rm --tty fscm/rockylinux" \
-  params=""
+    maintainer="Frederico Martins <https://hub.docker.com/u/fscm/>" \
+    vendor="fscm" \
+    cmd="docker container run --interactive --rm --tty fscm/rockylinux" \
+    org.label-schema.schema-version="1.0" \
+    org.label-schema.name="fscm/rockylinux" \
+    org.label-schema.description="A small Rocky Linux image" \
+    org.label-schema.url="https://rockylinux.org/" \
+    org.label-schema.vcs-url="https://github.com/fscm/docker-rockylinux/" \
+    org.label-schema.vendor="fscm" \
+    org.label-schema.version=${OS_VERSION} \
+    org.label-schema.docker.cmd="docker container run --interactive --rm --tty fscm/rockylinux" \
+    org.label-schema.docker.cmd.test="docker container run --interactive --rm --tty fscm/rockylinux in_sanity"
 
 COPY --from=first_stage "${__BUILD_DIR__}" "/"
 
 ENV \
-  LANG="C.UTF-8" \
-  LC_ALL="C.UTF-8"
+    LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8"
 
 CMD ["/bin/bash"]
