@@ -4,7 +4,7 @@ ARG OS_VERSION="8.5.2111"
 
 
 
-FROM rockylinux/rockylinux:8 as first_stage
+FROM rockylinux:8 as first_stage
 
 ARG __BUILD_DIR__
 ARG OS_VERSION
@@ -28,6 +28,7 @@ RUN \
     rpm --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-${OS_CODENAME}official" && \
 # dependencies
     echo '--> instaling dependencies' && \
+    dnf --quiet makecache --refresh && \
     dnf --assumeyes --quiet install \
         device-mapper-persistent-data \
         findutils \
@@ -38,13 +39,16 @@ RUN \
     install --directory --owner="${__USER__}" --group="${__USER__}" --mode=0755 "${__BUILD_DIR__}" && \
 # build first stage
     echo '--> building first stage' && \
-    dnf download --assumeyes --quiet --arch="$(arch),noarch" --destdir="${__WORK_DIR__}" ${OS_CODENAME}-release-${OS_VERSION%.*}-* && \
+    dnf download --assumeyes --quiet --arch="$(arch),noarch" --destdir="${__WORK_DIR__}" \
+        ${OS_CODENAME}-release-${OS_VERSION%.*}-* && \
     rpm --root "${__BUILD_DIR__}" --initdb && \
     rpm --root "${__BUILD_DIR__}" --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-${OS_CODENAME}official" && \
-    rpm --root "${__BUILD_DIR__}" --install --nodeps --noscripts "${__WORK_DIR__}"/"${OS_CODENAME}"-release*.rpm && \
+    rpm --root "${__BUILD_DIR__}" --install --nodeps --noscripts \
+        "${__WORK_DIR__}"/"${OS_CODENAME}"-release*.rpm && \
     dnf --assumeyes --quiet --disablerepo='*' --enablerepo='baseos' --installroot="${__BUILD_DIR__}" --setopt=tsflags='nodocs' --setopt=install_weak_deps='no' install \
         bash \
         "${OS_CODENAME}"-repos \
+        "${OS_CODENAME}"-gpg-keys \
         coreutils-single \
         dnf \
         glibc-minimal-langpack \
@@ -67,6 +71,7 @@ RUN \
     if [ -x "${__BUILD_DIR__}/usr/bin/systemctl" ]; then chroot "${__BUILD_DIR__}/" systemctl mask systemd-logind.service getty.target console-getty.service sys-fs-fuse-connections.mount systemd-remount-fs.service dev-hugepages.mount; fi && \
     rm -rf "${__BUILD_DIR__}/usr/share/info"/* && \
     rm -rf "${__BUILD_DIR__}/usr/share/man"/* && \
+    rm -rf "${__BUILD_DIR__}/var/cache/dnf"/* && \
     rm -rf "${__BUILD_DIR__}/var/cache/yum"/* && \
     rm -rf "${__BUILD_DIR__}/var/lib/dnf"/history.* && \
     rm -rf "${__BUILD_DIR__}/var/log"/* && \
@@ -84,7 +89,7 @@ RUN \
     find "${__BUILD_DIR__}/usr/share/doc" -mindepth 1 -not -type d -not \( -name 'COPYING*' -o -name 'GPL' -o -name '*LICENSE*' \) -delete && \
     find "${__BUILD_DIR__}/usr/share/doc" -mindepth 1 -type d -empty -delete && \
     find "${__BUILD_DIR__}/var/cache" -type f -delete && \
-    find "${__BUILD_DIR__}/etc/yum.repos.d" \( -iname '*debuginfo*' -o -iname '*media*' \) -type f -delete && \
+    find "${__BUILD_DIR__}/etc/yum.repos.d" -iname '*media*' -type f -delete && \
 # copy tests
     echo '--> copying test files' && \
     install --owner="${__USER__}" --group="${__USER__}" --mode=0755 --target-directory="${__BUILD_DIR__}/usr/bin" "${__WORK_DIR__}/tests"/* && \
@@ -92,6 +97,7 @@ RUN \
     echo '--> os version' && \
     cat "${__BUILD_DIR__}/etc/${OS_CODENAME}-release"* && \
     rpm --root "${__BUILD_DIR__}" --query --queryformat='%{VERSION}\n' "${OS_CODENAME}"-release && \
+    arch && \
 # done
     echo '--> all done!'
 

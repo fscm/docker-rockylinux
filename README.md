@@ -53,7 +53,7 @@ available, see the [tags on this repository](https://github.com/fscm/docker-rock
 
 ## Authors
 
-* **Frederico Martins** - [fscm](https://github.com/fscm)
+- **Frederico Martins** - [fscm](https://github.com/fscm)
 
 See also the list of [contributors](https://github.com/fscm/docker-rockylinux/contributors)
 who participated in this project.
