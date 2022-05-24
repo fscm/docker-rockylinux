@@ -1,6 +1,6 @@
 # global args
 ARG __BUILD_DIR__="/build"
-ARG OS_VERSION="8.5.2111"
+ARG OS_VERSION="8.6.2205"
 
 
 
@@ -53,6 +53,7 @@ RUN \
         dnf \
         glibc-minimal-langpack \
         hostname \
+        rootfiles \
         tar && \
 # clean up and tweaks...
     echo '--> system settings and tweaks' && \
@@ -78,7 +79,7 @@ RUN \
     rm -rf "${__BUILD_DIR__}/sbin/sln" && \
     rm -rf "${__BUILD_DIR__}/dev"/.??* && \
     rm -rf "${__BUILD_DIR__}/home"/.??* && \
-    rm -rf "${__BUILD_DIR__}/root"/.??* && \
+    # rm -rf "${__BUILD_DIR__}/root"/.??* && \
     rm -rf "${__BUILD_DIR__}/tmp"/.??* && \
     rm -rf "${__BUILD_DIR__}/boot" && \
     rm -rf "${__BUILD_DIR__}/proc" && \
